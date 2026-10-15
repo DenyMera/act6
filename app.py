@@ -21,7 +21,7 @@ def login_seguro(username, password_hash_check):
     return fila
 
 # ======================================================================
-# CASO 2 - Fuga de informacion: try/except + log interno
+# CASO 2 - Fuga de informacion: try/except + log interno123
 # ======================================================================
 logging.basicConfig(filename="app.log", level=logging.ERROR)
 
