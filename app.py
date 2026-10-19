@@ -6,13 +6,6 @@ Uso:
   python app.py            -> ejecuta las pruebas de los 6 casos en consola
   python app.py servidor   -> levanta la app en http://127.0.0.1:5001/queja (para OWASP ZAP)
 
-Correcciones respecto a la version analizada:
-  SonarQube  S8371 -> headers.get("Location") en lugar de headers["Location"]
-  SonarQube  S4502 -> CSRFProtect (Flask-WTF) activado de forma global
-  SonarQube  S2068 -> SECRET_KEY sin valor por defecto escrito en el codigo
-  ZAP  CSP sin directivas de respaldo -> frame-ancestors, form-action, base-uri
-  ZAP  Cookie sin SameSite            -> SESSION_COOKIE_SAMESITE / HTTPONLY / SECURE
-  ZAP  Cabecera Server con version    -> Server generico en after_request
 """
 import logging
 import os
@@ -26,6 +19,7 @@ import bcrypt
 import pyotp
 from flask import Flask, redirect, render_template_string, request
 from flask_wtf.csrf import CSRFProtect
+from werkzeug.serving import WSGIRequestHandler
 
 # ======================================================================
 # CASO 1 - Inyeccion SQL: consultas parametrizadas (SQLite)
@@ -70,8 +64,6 @@ def verificar(password: str, hashed: bytes) -> bool:
 # ======================================================================
 app = Flask(__name__)
 
-# [Sonar S2068] La clave NO se escribe en el codigo: se lee del entorno.
-# Si no existe, se genera una aleatoria en memoria (solo valida para desarrollo).
 _clave = os.environ.get("SECRET_KEY")
 if not _clave:
     _clave = secrets.token_hex(32)
@@ -83,7 +75,6 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("ALLOW_HTTP") != "1"
 
-# [Sonar S4502] Proteccion CSRF global para todos los POST
 csrf = CSRFProtect(app)
 
 quejas = []
@@ -123,8 +114,6 @@ def cabeceras(resp):
     resp.headers["X-Frame-Options"] = "DENY"
     resp.headers["Referrer-Policy"] = "no-referrer"
     resp.headers["Cache-Control"] = "no-store"
-    # [ZAP] No revelar "Werkzeug/x.y Python/x.y" en la cabecera Server
-    resp.headers["Server"] = "webserver"
     return resp
 
 # ======================================================================
@@ -169,6 +158,11 @@ def verificar_mfa(secreto, codigo):
 # ======================================================================
 # PRUEBAS Y SERVIDOR
 # ======================================================================
+class ZAPRequestHandler(WSGIRequestHandler):
+    def version_string(self):
+        return "webserver"
+
+
 def _token(cliente):
     html = cliente.get("/queja").get_data(as_text=True)
     return re.search(r'name="csrf_token" value="([^"]+)"', html).group(1)
@@ -180,7 +174,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1 and sys.argv[1] == "servidor":
         # Objetivo del escaneo de OWASP ZAP: http://127.0.0.1:5001/queja
-        app.run(host="127.0.0.1", port=5001)
+        app.run(host="127.0.0.1", port=5001, request_handler=ZAPRequestHandler)
         sys.exit(0)
 
     print("C1 payload SQLi ->", login_seguro("jayesh'; delete from user where id='1", None))

@@ -51,3 +51,71 @@ INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:05:15] "GET /sitemap.xml HTTP/1.1" 4
 INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:05:15] "POST /queja HTTP/1.1" 302 -
 INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:05:20] "GET /1916843361582864161 HTTP/1.1" 404 -
 INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:05:20] "POST /queja HTTP/1.1" 400 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:07] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:07] "GET /favicon.ico HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:23] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:23] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:23] "GET /robots.txt HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:23] "GET /sitemap.xml HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:23] "POST /queja HTTP/1.1" 302 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:28] "GET /3491206995694357928 HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:28] "POST /queja HTTP/1.1" 400 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:31] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:31] "GET /sitemap.xml HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:31] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:31] "GET /robots.txt HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:31] "POST /queja HTTP/1.1" 302 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:36] "GET /3777931912810010027 HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:36] "POST /queja HTTP/1.1" 400 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:41] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:41] "GET /sitemap.xml HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:41] "GET /robots.txt HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:41] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:42] "POST /queja HTTP/1.1" 302 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:47] "GET /154890644617467540 HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:18:47] "POST /queja HTTP/1.1" 400 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:19:24] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:19:55] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:19:55] "GET /robots.txt HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:19:55] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:19:55] "GET /sitemap.xml HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:19:55] "POST /queja HTTP/1.1" 302 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:20:00] "GET /8559878578318955366 HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:20:00] "POST /queja HTTP/1.1" 400 -
+ERROR:root:Edad invalida recibida
+Traceback (most recent call last):
+  File "C:\Users\denye\Desktop\act6\app.py", line 51, in leer_edad
+    edad = int(valor)
+ValueError: invalid literal for int() with base 10: 'abc'
+INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5001
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:25:42] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5001
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:26:28] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:26:46] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:26:47] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:26:52] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:26:52] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:26:52] "GET /robots.txt HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:26:52] "GET /sitemap.xml HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:26:52] "POST /queja HTTP/1.1" 302 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:26:57] "GET /8706906725049204388 HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:26:57] "POST /queja HTTP/1.1" 400 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:29:07] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:29:13] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:29:13] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:29:13] "GET /sitemap.xml HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:29:13] "GET /robots.txt HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:29:13] "POST /queja HTTP/1.1" 302 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:29:18] "GET /5857875665876557953 HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:29:18] "POST /queja HTTP/1.1" 400 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:31:26] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:31:26] "GET /robots.txt HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:31:26] "GET /queja HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:31:26] "GET /sitemap.xml HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:31:26] "POST /queja HTTP/1.1" 302 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:31:31] "GET /1774049668240935010 HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [18/Oct/2026 23:31:31] "POST /queja HTTP/1.1" 400 -
