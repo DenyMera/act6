@@ -1,15 +1,36 @@
 """
-Practica SAST/DAST - Codigo seguro para los 6 casos (+ MFA).
-Instalar: pip install flask bcrypt pyotp
+Practica SAST/DAST - Codigo seguro para los 6 casos (+ MFA) - VERSION CORREGIDA
+Instalar: pip install flask flask-wtf bcrypt pyotp
+
+Uso:
+  python app.py            -> ejecuta las pruebas de los 6 casos en consola
+  python app.py servidor   -> levanta la app en http://127.0.0.1:5001/queja (para OWASP ZAP)
+
+Correcciones respecto a la version analizada:
+  SonarQube  S8371 -> headers.get("Location") en lugar de headers["Location"]
+  SonarQube  S4502 -> CSRFProtect (Flask-WTF) activado de forma global
+  SonarQube  S2068 -> SECRET_KEY sin valor por defecto escrito en el codigo
+  ZAP  CSP sin directivas de respaldo -> frame-ancestors, form-action, base-uri
+  ZAP  Cookie sin SameSite            -> SESSION_COOKIE_SAMESITE / HTTPONLY / SECURE
+  ZAP  Cabecera Server con version    -> Server generico en after_request
 """
-import sqlite3, logging, os, time, html
-import bcrypt, pyotp
-from flask import Flask, request, redirect, render_template_string
+import logging
+import os
+import re
+import secrets
+import sqlite3
+import sys
+import threading
+import time
+import bcrypt
+import pyotp
+from flask import Flask, redirect, render_template_string, request
+from flask_wtf.csrf import CSRFProtect
 
 # ======================================================================
 # CASO 1 - Inyeccion SQL: consultas parametrizadas (SQLite)
 # ======================================================================
-def login_seguro(username, password_hash_check):
+def login_seguro(username, _password_hash_check):
     conn = sqlite3.connect(":memory:")
     cur = conn.cursor()
     cur.execute("CREATE TABLE user (id INTEGER PRIMARY KEY, username TEXT, password TEXT)")
@@ -21,7 +42,7 @@ def login_seguro(username, password_hash_check):
     return fila
 
 # ======================================================================
-# CASO 2 - Fuga de informacion: try/except + log interno123
+# CASO 2 - Fuga de informacion: try/except + log interno
 # ======================================================================
 logging.basicConfig(filename="app.log", level=logging.ERROR)
 
@@ -31,15 +52,13 @@ def leer_edad(valor):
         if not 0 < edad < 120:
             raise ValueError("fuera de rango")
         return {"ok": True, "edad": edad}
-    except ValueError:
-        logging.error("Edad invalida recibida", exc_info=True)   # detalle SOLO en el log
-        return {"ok": False, "mensaje": "Dato invalido. Ingrese un numero."}  # mensaje generico
+    except (TypeError, ValueError):
+        logging.exception("Edad invalida recibida")
+        return {"ok": False, "mensaje": "Dato invalido. Ingrese un numero."}
 
 # ======================================================================
 # CASO 3 - Contrasenas seguras con bcrypt (y secretos en variables de entorno)
 # ======================================================================
-DB_PASSWORD = os.environ.get("DB_PASSWORD")      # NUNCA escrita en el .py
-
 def hashear(password: str) -> bytes:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt())
 
@@ -47,27 +66,65 @@ def verificar(password: str, hashed: bytes) -> bool:
     return bcrypt.checkpw(password.encode(), hashed)
 
 # ======================================================================
-# CASO 4 - XSS: escape automatico de Jinja2 + CSP
+# CASO 4 - XSS: escape automatico de Jinja2 + CSP  (+ proteccion CSRF)
 # ======================================================================
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "cambiar-en-produccion")
+
+# [Sonar S2068] La clave NO se escribe en el codigo: se lee del entorno.
+# Si no existe, se genera una aleatoria en memoria (solo valida para desarrollo).
+_clave = os.environ.get("SECRET_KEY")
+if not _clave:
+    _clave = secrets.token_hex(32)
+    logging.warning("SECRET_KEY no definida: se uso una clave temporal.")
+app.config["SECRET_KEY"] = _clave
+
+# [ZAP] Cookie de sesion con atributos de seguridad (SameSite, HttpOnly, Secure)
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SECURE"] = os.environ.get("ALLOW_HTTP") != "1"
+
+# [Sonar S4502] Proteccion CSRF global para todos los POST
+csrf = CSRFProtect(app)
+
 quejas = []
+intentos = {}
+intentos_lock = threading.Lock()
+
 
 @app.route("/queja", methods=["GET", "POST"])
 def queja():
     if request.method == "POST":
-        quejas.append(request.form.get("comentario", "")[:500])
+        comentario = request.form.get("comentario", "") or ""
+        quejas.append(comentario[:500])
         return redirect("/queja")
     # {{ q }} se escapa automaticamente; NO usar |safe
     return render_template_string(
-        "<h1>Quejas</h1>{% for q in quejas %}<p>{{ q }}</p>{% endfor %}", quejas=quejas)
+        """
+        <h1>Quejas</h1>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <textarea name="comentario" maxlength="500"></textarea>
+            <button type="submit">Enviar</button>
+        </form>
+        {% for q in quejas %}<p>{{ q }}</p>{% endfor %}
+        """,
+        quejas=quejas,
+    )
 
 @app.after_request
 def cabeceras(resp):
-    resp.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; object-src 'none'"
+    # [ZAP] CSP completa: frame-ancestors, form-action y base-uri no heredan de default-src
+    resp.headers["Content-Security-Policy"] = (
+        "default-src 'self'; script-src 'self'; object-src 'none'; "
+        "frame-ancestors 'none'; form-action 'self'; base-uri 'self'"
+    )
     resp.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["X-Frame-Options"] = "DENY"
+    resp.headers["Referrer-Policy"] = "no-referrer"
+    resp.headers["Cache-Control"] = "no-store"
+    # [ZAP] No revelar "Werkzeug/x.y Python/x.y" en la cabecera Server
+    resp.headers["Server"] = "webserver"
     return resp
 
 # ======================================================================
@@ -83,17 +140,20 @@ def forzar_https():
 # CASO 6 - Fuerza bruta: limite de intentos + bloqueo temporal
 # ======================================================================
 MAX_INTENTOS, BLOQUEO_SEG = 5, 300
-intentos = {}   # usuario -> (fallos, ultimo_fallo)
+
 
 def login_con_limite(usuario, password, hash_correcto):
-    fallos, ultimo = intentos.get(usuario, (0, 0))
-    if fallos >= MAX_INTENTOS and time.time() - ultimo < BLOQUEO_SEG:
-        return "Cuenta bloqueada temporalmente. Intente mas tarde."
-    if verificar(password, hash_correcto):
-        intentos.pop(usuario, None)
-        return "Acceso concedido"
-    intentos[usuario] = (fallos + 1, time.time())
-    return "Credenciales invalidas"
+    with intentos_lock:
+        fallos, ultimo = intentos.get(usuario, (0, 0))
+        if fallos >= MAX_INTENTOS:
+            if time.time() - ultimo < BLOQUEO_SEG:
+                return "Cuenta bloqueada temporalmente. Intente mas tarde."
+            fallos = 0  # el bloqueo expiro: se reinicia el contador
+        if verificar(password, hash_correcto):
+            intentos.pop(usuario, None)
+            return "Acceso concedido"
+        intentos[usuario] = (fallos + 1, time.time())
+        return "Credenciales invalidas"
 
 # ======================================================================
 # EXTRA - MFA (TOTP)
@@ -107,19 +167,36 @@ def verificar_mfa(secreto, codigo):
     return pyotp.TOTP(secreto).verify(codigo, valid_window=1)
 
 # ======================================================================
-# PRUEBAS (python casos_1_a_6.py)
+# PRUEBAS Y SERVIDOR
 # ======================================================================
+def _token(cliente):
+    html = cliente.get("/queja").get_data(as_text=True)
+    return re.search(r'name="csrf_token" value="([^"]+)"', html).group(1)
+
+
 if __name__ == "__main__":
-    os.environ["ALLOW_HTTP"] = "1"
+    os.environ["ALLOW_HTTP"] = "1"          # solo para pruebas locales por HTTP
+    app.config["SESSION_COOKIE_SECURE"] = False
+
+    if len(sys.argv) > 1 and sys.argv[1] == "servidor":
+        # Objetivo del escaneo de OWASP ZAP: http://127.0.0.1:5001/queja
+        app.run(host="127.0.0.1", port=5001)
+        sys.exit(0)
+
     print("C1 payload SQLi ->", login_seguro("jayesh'; delete from user where id='1", None))
     print("C1 usuario valido ->", login_seguro("jayesh", None))
     print("C2 'abc' ->", leer_edad("abc"), "| '25' ->", leer_edad("25"))
     h = hashear("Clave#2026"); print("C3 bcrypt ok/mal ->", verificar("Clave#2026", h), verificar("otra", h))
     c = app.test_client()
-    c.post("/queja", data={"comentario": "<script>alert(1)</script>"})
+    tk = _token(c)
+    print("C4 POST sin token CSRF ->", c.post("/queja", data={"comentario": "x"}).status_code)  # 400
+    c.post("/queja", data={"comentario": "<script>alert(1)</script>", "csrf_token": tk})
     r = c.get("/queja").get_data(as_text=True); print("C4 ->", r)
-    print("C4 CSP ->", "Content-Security-Policy" in c.get("/queja").headers)
+    resp = c.get("/queja")
+    print("C4 CSP ->", resp.headers.get("Content-Security-Policy"))
+    print("ZAP Server ->", resp.headers.get("Server"))
     del os.environ["ALLOW_HTTP"]
-    rr = c.get("/queja", base_url="http://localhost"); print("C5 ->", rr.status_code, rr.headers["Location"])
+    rr = c.get("/queja", base_url="http://localhost")
+    print("C5 ->", rr.status_code, rr.headers.get("Location"))
     print("C6 ->", [login_con_limite("ana", "mala", h)[:20] for _ in range(7)])
     s, uri = configurar_mfa(); print("MFA ->", verificar_mfa(s, pyotp.TOTP(s).now()), verificar_mfa(s, "000000"))
